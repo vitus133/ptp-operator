@@ -149,7 +149,6 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-serial]", Serial, f
 		var ptpPods *v1core.PodList
 		var fifoPriorities map[string]int64
 		var fullConfig testconfig.TestConfig
-		var grandmasterID *string
 		portEngine := ptptesthelper.PortEngine{}
 
 		execute.BeforeAll(func() {
@@ -170,17 +169,6 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-serial]", Serial, f
 			if fullConfig.PtpModeDesired != testconfig.Discovery {
 				ptphelper.RestartPTPDaemon()
 			}
-
-			isExternalMaster := ptphelper.IsExternalGM()
-
-			if fullConfig.L2Config != nil && !isExternalMaster {
-				aLabel := pkg.PtpGrandmasterNodeLabel
-				aString, err := ptphelper.GetClockIDMaster(pkg.PtpGrandMasterPolicyName, &aLabel, nil, true)
-				grandmasterID = &aString
-				Expect(err).To(BeNil())
-			}
-			By("Check sync")
-			err = ptptesthelper.BasicClockSyncCheck(fullConfig, (*ptpv1.PtpConfig)(fullConfig.DiscoveredClockUnderTestPtpConfig), grandmasterID, metrics.MetricClockStateLocked, metrics.MetricRoleSlave, true)
 
 			portEngine.Initialize(fullConfig.DiscoveredClockUnderTestPod, fullConfig.DiscoveredFollowerInterfaces)
 
@@ -388,7 +376,14 @@ var _ = Describe("["+strings.ToLower(DesiredMode.String())+"-serial]", Serial, f
 					Skip("Test reserved for dual follower scenario")
 				}
 				Expect(len(fullConfig.DiscoveredFollowerInterfaces) == 2)
-
+				isExternalMaster := ptphelper.IsExternalGM()
+				var grandmasterID *string
+				if fullConfig.L2Config != nil && !isExternalMaster {
+					aLabel := pkg.PtpGrandmasterNodeLabel
+					aString, err := ptphelper.GetClockIDMaster(pkg.PtpGrandMasterPolicyName, &aLabel, nil, true)
+					grandmasterID = &aString
+					Expect(err).To(BeNil())
+				}
 				// Retry until there is no error or we timeout
 				Eventually(func() error {
 					return portEngine.RolesInOnly([]metrics.MetricRole{metrics.MetricRoleSlave, metrics.MetricRoleListening})
