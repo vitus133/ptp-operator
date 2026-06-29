@@ -60,8 +60,8 @@ metadata:
     capabilities: Basic Install
     categories: Networking
     certified: "false"
-    containerImage: quay.io/openshift/origin-ptp-operator:4.20
-    createdAt: "2024-06-12"
+    containerImage: quay.io/openshift/origin-ptp-operator:4.22
+    createdAt: "2026-06-29T17:24:47Z"
     description: This software enables configuration of Precision Time Protocol(PTP)
       on Kubernetes. It detects hardware capable PTP devices on each node, and configures
       linuxptp processes such as ptp4l, phc2sys and timemaster.
@@ -75,21 +75,24 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "false"
     features.operators.openshift.io/token-auth-azure: "false"
     features.operators.openshift.io/token-auth-gcp: "false"
-    olm.skipRange: ">=4.3.0-0 <4.20.0"
+    olm.skipRange: ">=4.3.0-0 <4.22.0"
     operatorframework.io/suggested-namespace: openshift-ptp
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    operators.openshift.io/must-gather-image: quay.io/openshift/origin-ptp-operator-must-gather:4.21
-    operators.operatorframework.io/builder: operator-sdk-v1.22.0-ocp
+    operators.openshift.io/must-gather-image: quay.io/openshift/origin-ptp-operator-must-gather:4.22
+    operators.operatorframework.io/builder: operator-sdk-v1.36.1-ocp
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
     repository: https://github.com/k8snetworkplumbingwg/ptp-operator
     support: Red Hat
-  name: ptp-operator.v4.20.0
+  name: ptp-operator.v4.22.0
   namespace: openshift-ptp
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - kind: HardwareConfig
+      name: hardwareconfigs.ptp.openshift.io
+      version: v2alpha1
     - description: NodePtpDevice is the Schema for the nodeptpdevices API
       displayName: Node Ptp Device
       kind: NodePtpDevice
@@ -105,10 +108,10 @@ spec:
       kind: PtpOperatorConfig
       name: ptpoperatorconfigs.ptp.openshift.io
       specDescriptors:
-      - description: 'ApiVersion is used to determine which API is used for the event
-          service 1.0: default version. event service is mapped to internal REST-API.
-          2.x: event service is mapped to O-RAN v3.0 Compliant O-Cloud Notification
-          REST-API.'
+      - description: |-
+          ApiVersion is used to determine which API is used for the event service
+          1.0: default version. event service is mapped to internal REST-API.
+          2.x: event service is mapped to O-RAN v3.0 Compliant O-Cloud Notification REST-API.
         displayName: ApiVersion
         path: ptpEventConfig.apiVersion
         x-descriptors:
@@ -118,8 +121,9 @@ spec:
         path: ptpEventConfig.storageType
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:text
-      - description: 'TransportHost format is <protocol>://<transport-service>.<namespace>.svc.cluster.local:<transport-port>
-          Example HTTP transport: "http://ptp-event-publisher-service-NODE_NAME.openshift-ptp.svc.cluster.local:9043"'
+      - description: |-
+          TransportHost format is <protocol>://<transport-service>.<namespace>.svc.cluster.local:<transport-port>
+          Example HTTP transport: "http://ptp-event-publisher-service-NODE_NAME.openshift-ptp.svc.cluster.local:9043"
         displayName: Transport Host
         path: ptpEventConfig.transportHost
         x-descriptors:
@@ -280,6 +284,7 @@ spec:
         - apiGroups:
           - config.openshift.io
           resources:
+          - apiservers
           - infrastructures
           verbs:
           - get
@@ -300,32 +305,8 @@ spec:
         - apiGroups:
           - ptp.openshift.io
           resources:
+          - hardwareconfigs
           - ptpconfigs
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ptp.openshift.io
-          resources:
-          - ptpconfigs/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - ptp.openshift.io
-          resources:
-          - ptpconfigs/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - ptp.openshift.io
-          resources:
           - ptpoperatorconfigs
           verbs:
           - create
@@ -338,12 +319,16 @@ spec:
         - apiGroups:
           - ptp.openshift.io
           resources:
+          - hardwareconfigs/finalizers
+          - ptpconfigs/finalizers
           - ptpoperatorconfigs/finalizers
           verbs:
           - update
         - apiGroups:
           - ptp.openshift.io
           resources:
+          - hardwareconfigs/status
+          - ptpconfigs/status
           - ptpoperatorconfigs/status
           verbs:
           - get
@@ -378,13 +363,13 @@ spec:
                 - name: OPERATOR_NAME
                   value: ptp-operator
                 - name: RELEASE_VERSION
-                  value: v4.20.0
+                  value: v4.22.0
                 - name: LINUXPTP_DAEMON_IMAGE
-                  value: quay.io/openshift/origin-ptp:4.20
+                  value: quay.io/openshift/origin-ptp:4.22
                 - name: KUBE_RBAC_PROXY_IMAGE
-                  value: quay.io/openshift/origin-kube-rbac-proxy:4.20
+                  value: quay.io/openshift/origin-kube-rbac-proxy:4.22
                 - name: SIDECAR_EVENT_IMAGE
-                  value: quay.io/openshift/origin-cloud-event-proxy:4.20
+                  value: quay.io/openshift/origin-cloud-event-proxy:4.22
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
@@ -393,7 +378,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.name
-                image: quay.io/openshift/origin-ptp-operator:4.20
+                image: quay.io/openshift/origin-ptp-operator:4.22
                 imagePullPolicy: IfNotPresent
                 name: ptp-operator
                 ports:
@@ -506,7 +491,7 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.20.0
+  version: 4.22.0
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
